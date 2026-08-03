@@ -24,10 +24,12 @@ async def health_check():
 
 @app.get("/tasks")
 async def get_tasks():
+    """Retrieves all tasks in the list"""
     return task_list
 
 @app.get("/tasks/{id}")
 async def return_task(id: int):
+    """Raises an error if the task doesn't exist"""
     for task in task_list:
         if task["id"] == id:
             return task
@@ -35,6 +37,7 @@ async def return_task(id: int):
 
 @app.post("/tasks", status_code = 201)
 async def add_task(task_data: Task):
+    """Creates a new task with validation"""
     if not task_data.title or not task_data.title.strip():
         raise HTTPException(status_code=400, detail={"error": "Title is required"})
     next_id = max([t["id"] for t in task_list], default=0) + 1
@@ -44,6 +47,7 @@ async def add_task(task_data: Task):
 
 @app.put("/tasks/{id}")
 async def replacement(id:int, task_data: TaskUpdate):
+    """Lets you replace any task with validation"""
     if not task_data.title or not task_data.title.strip():
         raise HTTPException(status_code=400, detail={"error": "Title is required"})
     for task in task_list:
@@ -55,6 +59,7 @@ async def replacement(id:int, task_data: TaskUpdate):
 
 @app.delete("/tasks/{id}", status_code = 204)
 async def delete_task(id: int):
+    """Lets you remove a task"""
     for task in task_list:
         if task["id"] == id:
             task_list.remove(task)
