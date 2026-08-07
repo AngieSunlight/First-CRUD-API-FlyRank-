@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import sqlite3
 
 task_list= [{"id": 1, "title": "Study", "done": True}, {"id": 2, "title": "Exercise", "done": False}, {"id": 3, "title": "Shopping", "done": False}]
     
@@ -25,15 +26,26 @@ async def health_check():
 @app.get("/tasks")
 async def get_tasks():
     """Retrieves all tasks in the list"""
-    return task_list
+    conn = sqlite3.connect("tasks.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tasks")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 @app.get("/tasks/{id}")
 async def return_task(id: int):
     """Raises an error if the task doesn't exist"""
-    for task in task_list:
-        if task["id"] == id:
-            return task
-    raise HTTPException(status_code=404, detail={"error": f"Task {id} not found"})
+    conn = sqlite3.connect("tasks.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row is None:
+        raise HTTPException(status_code=404, detail={"error": f"Task {id} not found"})
+    return dict(row)
 
 @app.post("/tasks", status_code = 201)
 async def add_task(task_data: Task):
