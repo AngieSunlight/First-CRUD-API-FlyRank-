@@ -84,3 +84,11 @@ uvicorn main:app --reload
 
 ![DB Browser](DB_Browser.png)
 ![DB Browser](Stage_5_DB_Browser.png)
+
+## A3 - Postgres in Docker
+
+This created Postgres container with a volume so its data persists
+
+\```bash
+docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5432 -v taskdata:/var/lib/postgresql/data -d postgres:16
+\```
