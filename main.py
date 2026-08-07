@@ -67,19 +67,30 @@ async def add_task(task_data: Task):
 async def replacement(id:int, task_data: TaskUpdate):
     """Lets you replace any task with validation"""
     if not task_data.title or not task_data.title.strip():
-        raise HTTPException(status_code=400, detail={"error": "Title is required"})
-    for task in task_list:
-        if task["id"] == id:
-            task["title"] = task_data.title.strip()
-            task["done"] = task_data.done
-            return task
-    raise HTTPException(status_code = 404, detail = {"error": f"Task {id} not found"})
+            raise HTTPException(status_code=400, detail={"error": "Title is required"})
+    
+    conn = sqlite3.connect("tasks.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tasks SET title = ?, done = ? WHERE id = ?", (task_data.title, task_data.done, id))
+    conn.commit()
+    #cursor.rowcount tells you how many rows the last query changed
+    if cursor.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code = 404, detail = {"error": f"Task {id} not found"})
+    conn.close()
+    return {"id": id, "title": task_data.title.strip(), "done": task_data.done}
 
 @app.delete("/tasks/{id}", status_code = 204)
 async def delete_task(id: int):
     """Lets you remove a task"""
-    for task in task_list:
-        if task["id"] == id:
-            task_list.remove(task)
-            return
-    raise HTTPException(status_code=404, detail = {"error": f"Task {id} not found"})
+    conn = sqlite3.connect("tasks.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tasks WHERE id = ?", (id,))
+    if cursor.rowcount == 0:
+        conn.close()
+        raise HTTPException(status_code=404, detail = {"error": f"Task {id} not found"})
+    conn.commit()
+    conn.close()
+    return
