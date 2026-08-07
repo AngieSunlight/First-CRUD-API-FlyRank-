@@ -64,3 +64,23 @@ Ran this is DB Browser:
 DELETE FROM tasks WHERE done = 1;
 ```
 Before running, every task had 'done = 1' in the table, so after running, this deleted all the tasks causing the API to return '[]'.
+
+![Set done status to 1 for all tasks](Stage_4_done_1.png)
+![Deleted all where done = 1](Stage_4_Deleted.png)
+
+## Why SQLite
+
+SQLite was chosen as it doesn't require a server and only produces a single file.
+
+## Where the DB file lives
+
+This is automatically created on startup. The file itself, tasks.db, has be placed into a .gitignore file so that every clone produced starts fresh
+
+## A documented command to run the project
+
+uvicorn main:app --reload
+
+## Screenshot of database open in DB browser
+
+![DB Browser](DB_Browser.png)
+![DB Browser](Stage_5_DB_Browser.png)

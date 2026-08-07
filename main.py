@@ -1,9 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
+from database import init_db
 
-task_list= [{"id": 1, "title": "Study", "done": True}, {"id": 2, "title": "Exercise", "done": False}, {"id": 3, "title": "Shopping", "done": False}]
-    
 class Task(BaseModel):
     title: str
 
@@ -12,6 +11,10 @@ class TaskUpdate(BaseModel):
     done:bool
 
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup():
+    init_db()
 
 @app.get("/")
 async def root():
