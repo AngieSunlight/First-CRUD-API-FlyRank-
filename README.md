@@ -55,3 +55,12 @@ content-type: application/json
 ## Swagger UI Screenshot
 
 ![Swagger UI Documentation](Swagger_UI.png)
+
+
+## Stage 4: Exploring SQLite by hand
+
+Ran this is DB Browser:
+```sql
+DELETE FROM tasks WHERE done = 1;
+```
+Before running, every task had 'done = 1' in the table, so after running, this deleted all the tasks causing the API to return '[]'.
