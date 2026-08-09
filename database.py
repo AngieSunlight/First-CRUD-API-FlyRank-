@@ -38,5 +38,32 @@ def init_db():
     conn.commit()
     conn.close()
 
+
+def get_every_task():
+    try:
+        conn = psycopg.connect(DATABASE_URL)
+    except Exception as e:
+        print("DB not connected:", e)
+    cursor = conn.cursor(row_factory=psycopg.rows.dict_row)
+    cursor.execute("SELECT * FROM tasks")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+def specify_task(id):
+    try:
+        conn = psycopg.connect(DATABASE_URL)
+    except Exception as e:
+        print("DB not connected:", e)
+    # row_factory=psycopg.rows.dict_row, tells psycopg to shape each row as a dictionary
+    cursor = conn.cursor(row_factory=psycopg.rows.dict_row)
+    cursor.execute("SELECT * FROM tasks WHERE id = %s", (id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row
+    
+
+    
+
 if __name__ == "__main__":
     init_db()

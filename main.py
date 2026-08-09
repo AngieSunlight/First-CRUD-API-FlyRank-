@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
-from database import init_db
+from database import init_db, get_every_task, specify_task
 
 class Task(BaseModel):
     title: str
@@ -29,26 +29,15 @@ async def health_check():
 @app.get("/tasks")
 async def get_tasks():
     """Retrieves all tasks in the list"""
-    conn = sqlite3.connect("tasks.db")
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM tasks")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    return get_every_task()
 
 @app.get("/tasks/{id}")
 async def return_task(id: int):
     """Raises an error if the task doesn't exist"""
-    conn = sqlite3.connect("tasks.db")
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
-    row = cursor.fetchone()
-    conn.close()
+    row = specify_task(id)
     if row is None:
         raise HTTPException(status_code=404, detail={"error": f"Task {id} not found"})
-    return dict(row)
+    return row
 
 @app.post("/tasks", status_code = 201)
 async def add_task(task_data: Task):
