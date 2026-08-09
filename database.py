@@ -1,20 +1,23 @@
-import sqlite3
+import os
+import psycopg
+from dotenv import load_dotenv
+
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 def init_db():
-    file = "tasks.db"
-
     try:
-        conn = sqlite3.connect(file)
-    except:
-        print("DB not connected")
+        conn = psycopg.connect(DATABASE_URL)
+    except Exception as e:
+        print("DB not connected:", e)
 
     cursor = conn.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY,
-            title text NOT NULL,
-            done BOOL
+            id SERIAL PRIMARY KEY,
+            title TEXT NOT NULL,
+            done BOOLEAN NOT NULL DEFAULT FALSE
         );
     """)
 
@@ -23,15 +26,17 @@ def init_db():
 
     if count == 0:
         seed = [
-            ("Bake a Cake", 0),
-            ("Feed the cat", 0),
-            ("Finish homework",0),
+            ("Bake a Cake", False),
+            ("Feed the cat", False),
+            ("Finish homework", False),
         ]
         cursor.executemany(
-            "INSERT INTO tasks (title, done) VALUES (?, ?)",
+            "INSERT INTO tasks (title, done) VALUES (%s, %s)",
             seed
         )
-        
 
     conn.commit()
     conn.close()
+
+if __name__ == "__main__":
+    init_db()
