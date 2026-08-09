@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
-from database import init_db, get_every_task, specify_task
+from database import *
 
 class Task(BaseModel):
     title: str
@@ -45,14 +45,7 @@ async def add_task(task_data: Task):
     if not task_data.title or task_data.title.strip() == "":
         raise HTTPException(status_code=400, detail={"error": "Title is required"})
     
-    conn = sqlite3.connect("tasks.db")
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO tasks (title, done) VALUES (?, ?)", (task_data.title,False,))
-    conn.commit()
-    next_id = cursor.lastrowid
-    conn.close()
-    new_task = {"id": next_id, "title": task_data.title.strip(), "done": False}
+    new_task = addition(task_data)
     return new_task
 
 @app.put("/tasks/{id}")
@@ -60,29 +53,17 @@ async def replacement(id:int, task_data: TaskUpdate):
     """Lets you replace any task with validation"""
     if not task_data.title or not task_data.title.strip():
             raise HTTPException(status_code=400, detail={"error": "Title is required"})
-    
-    conn = sqlite3.connect("tasks.db")
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("UPDATE tasks SET title = ?, done = ? WHERE id = ?", (task_data.title, task_data.done, id))
-    conn.commit()
+
+    row = replace(id, task_data)
     #cursor.rowcount tells you how many rows the last query changed
-    if cursor.rowcount == 0:
-        conn.close()
+    if row is None:
         raise HTTPException(status_code = 404, detail = {"error": f"Task {id} not found"})
-    conn.close()
-    return {"id": id, "title": task_data.title.strip(), "done": task_data.done}
+    return row
 
 @app.delete("/tasks/{id}", status_code = 204)
 async def delete_task(id: int):
     """Lets you remove a task"""
-    conn = sqlite3.connect("tasks.db")
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM tasks WHERE id = ?", (id,))
-    if cursor.rowcount == 0:
-        conn.close()
+    to_del = delete(id)
+    if to_del is None:
         raise HTTPException(status_code=404, detail = {"error": f"Task {id} not found"})
-    conn.commit()
-    conn.close()
     return
