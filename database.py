@@ -6,11 +6,7 @@ load_dotenv()
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 def init_db():
-    try:
-        conn = psycopg.connect(DATABASE_URL)
-    except Exception as e:
-        print("DB not connected:", e)
-
+    conn = psycopg.connect(DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
