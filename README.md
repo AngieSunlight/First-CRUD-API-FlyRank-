@@ -138,5 +138,5 @@ content-type: application/json
 \```
 
 ## Screenshot of data in the database
-![Data in Database](Table_week3.png)
+![Data in Database](Table_week3_1.png)
 
