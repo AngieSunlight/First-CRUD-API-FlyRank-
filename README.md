@@ -57,6 +57,7 @@ content-type: application/json
 ![Swagger UI Documentation](Swagger_UI.png)
 
 
+Week 3
 ## Stage 4: Exploring SQLite by hand
 
 Ran this is DB Browser:
@@ -92,3 +93,50 @@ This created Postgres container with a volume so its data persists
 \```bash
 docker run --name taskdb -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=tasks -p 5432:5432 -v taskdata:/var/lib/postgresql/data -d postgres:16
 \```
+
+## Applying a containerized Postgres stack
+A task CRUD API that runs against a PostgreSQL database, fully containerized with Docker Compose.
+
+## Command to run everything 
+
+1. Copy the example environment file:
+   \```
+   cp .env.example .env
+   \```
+2. Start the whole stack:
+   \```
+   docker compose up
+   \```
+3. The API is available at http://localhost:8000
+
+## Which variables to set
+
+Refer to  `.env.example` for the required format. Copy it to `.env` — the default values work out of the box with `docker compose up`.
+
+## Table with Endpoints
+
+| Method | Endpoint       | Description                           |
+|--------|----------------|---------------------------------------|
+| GET    | /root          | Defines route for root URL of the API |
+| GET    | /health        | Gets health status                    |
+| GET    | /tasks         | List all tasks                        |
+| GET    | /tasks/{id}    | Get one task                          |
+| POST   | /tasks         | Create a task                         |
+| PUT    | /tasks/{id}    | Update a task                         |
+| DELETE | /tasks/{id}    | Delete a task                         |
+
+## curl -i
+\```
+curl.exe -i http://localhost:8000/tasks
+HTTP/1.1 200 OK
+date: Sun, 09 Aug 2026 18:52:19 GMT
+server: uvicorn
+content-length: 187
+content-type: application/json
+
+[{"id":1,"title":"Bake a Cake","done":false},{"id":2,"title":"Feed the cat","done":false},{"id":3,"title":"Finish homework","done":false},{"id":4,"title":"Persistence test","done":false}]
+\```
+
+## Screenshot of data in the database
+![Data in Database](Table_week3.png)
+
