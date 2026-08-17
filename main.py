@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 from database import *
-from supabase_client import supabase, sign_up_user, login, getUser_Token
+from supabase_client import supabase, sign_up_user, login, getUser_Token, log_out
 
 class Task(BaseModel):
     title: str
@@ -19,6 +19,16 @@ class LoginData(BaseModel):
     password: str
 
 app = FastAPI()
+
+async def get_current_user(authorization: str | None = Header(default=None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail={"error": "Access token required"})
+    token = authorization.split(" ")[1]
+    try:
+        result = getUser_Token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail={"error": "Invalid or expired token"})
+    return result.user
 
 @app.on_event("startup")
 async def startup():
@@ -101,17 +111,18 @@ async def public_info():
     return {"message": "Welcome stranger! This info is public. "}
 
 @app.get("/protected/profile")
-async def protect(authorization: str | None = Header(default=None)):
-    print("Received auth header:", repr(authorization))
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail={"error": "Access token required"})
-    token = authorization.split(" ")[1]
-    try:
-        result = getUser_Token(token)
-    except Exception:
-        raise HTTPException(status_code=401, detail={"error": "Invalid or expired token"})
+async def protect(current_user = Depends(get_current_user)):
     return {
-        "id": result.user.id,
-        "email": result.user.email,
-        "created_at": result.user.created_at
+        "id": current_user.id,
+        "email": current_user.email,
+        "created_at": current_user.created_at
     }
+
+@app.post("/auth/logout", status_code=204)
+async def logout(current_user = Depends(get_current_user)):
+    log_out()
+    return
+
+@app.get("/protected/dashboard")
+async def dashboard(current_user = Depends(get_current_user)):
+    return {"message": f"Welcome to your dashboard, {current_user.email}"}

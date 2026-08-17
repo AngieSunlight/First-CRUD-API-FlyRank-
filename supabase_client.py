@@ -21,5 +21,8 @@ def getUser_Token(token):
     response = supabase.auth.get_user(token)
     return response
 
+def log_out():
+    supabase.auth.sign_out()
+
 if __name__ == "__main__":
     print("Supabase client created:", supabase)
