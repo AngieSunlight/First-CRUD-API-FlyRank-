@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from database import *
-from supabase_client import supabase
+from supabase_client import supabase, sign_up_user, login
 
 class Task(BaseModel):
     title: str
@@ -9,6 +9,14 @@ class Task(BaseModel):
 class TaskUpdate(BaseModel):
     title:str
     done:bool
+
+class SignupData(BaseModel):
+    email: str
+    password: str
+
+class LoginData(BaseModel):
+    email: str
+    password: str
 
 app = FastAPI()
 
@@ -67,3 +75,23 @@ async def delete_task(id: int):
     if to_del is None:
         raise HTTPException(status_code=404, detail = {"error": f"Task {id} not found"})
     return
+
+@app.post("/auth/signup",status_code=201)
+async def sign_up(sign_up_data: SignupData):
+    if not sign_up_data.email or not sign_up_data.password:
+        raise HTTPException(status_code=400, detail = {"error": f"Email and password required"})
+    result = sign_up_user(sign_up_data.email, sign_up_data.password)
+    return result
+
+@app.post("/auth/login", status_code= 200)
+async def sign_in_with_password(sign_in_data: LoginData):
+    if not sign_in_data.email or not sign_in_data.password:
+        raise HTTPException(status_code=400, detail = {"error": f"Email and password required"})
+    try:
+        result = login(sign_in_data.email, sign_in_data.password)
+    except Exception:
+        raise HTTPException(status_code=401, detail = {"error": f"Invalid login credentials"})
+    return {
+        "access_token": result.session.access_token,
+        "refresh_token": result.session.refresh_token
+    }

@@ -9,5 +9,13 @@ SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+def sign_up_user(email, password):
+    data = supabase.auth.sign_up({"email": email, "password": password})
+    return data
+
+def login(email, password):
+    data = supabase.auth.sign_in_with_password({"email": email, "password": password})
+    return data
+
 if __name__ == "__main__":
     print("Supabase client created:", supabase)
