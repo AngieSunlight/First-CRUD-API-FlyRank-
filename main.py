@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from database import *
 from supabase_client import supabase, sign_up_user, login
@@ -95,3 +95,14 @@ async def sign_in_with_password(sign_in_data: LoginData):
         "access_token": result.session.access_token,
         "refresh_token": result.session.refresh_token
     }
+
+@app.get("/public/info")
+async def public_info():
+    return {"message": "Welcome stranger! This info is public. "}
+
+@app.get("/protected/profile")
+async def protect(auth: str | None = Header(default=None)):
+    if not auth or not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail={"error": "Access token required"})
+    token = auth.split(" ")[1]
+    return {"token": token}
