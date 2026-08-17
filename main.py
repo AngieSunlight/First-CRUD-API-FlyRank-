@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 from database import *
 from supabase_client import supabase, sign_up_user, login, getUser_Token, log_out
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+secure = HTTPBearer()
 
 class Task(BaseModel):
     title: str
@@ -20,10 +23,8 @@ class LoginData(BaseModel):
 
 app = FastAPI()
 
-async def get_current_user(authorization: str | None = Header(default=None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail={"error": "Access token required"})
-    token = authorization.split(" ")[1]
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(secure)):
+    token = credentials.credentials
     try:
         result = getUser_Token(token)
     except Exception:
