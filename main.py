@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from database import *
-from supabase_client import supabase, sign_up_user, login
+from supabase_client import supabase, sign_up_user, login, getUser_Token
 
 class Task(BaseModel):
     title: str
@@ -101,8 +101,17 @@ async def public_info():
     return {"message": "Welcome stranger! This info is public. "}
 
 @app.get("/protected/profile")
-async def protect(auth: str | None = Header(default=None)):
-    if not auth or not auth.startswith("Bearer "):
+async def protect(authorization: str | None = Header(default=None)):
+    print("Received auth header:", repr(authorization))
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail={"error": "Access token required"})
-    token = auth.split(" ")[1]
-    return {"token": token}
+    token = authorization.split(" ")[1]
+    try:
+        result = getUser_Token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail={"error": "Invalid or expired token"})
+    return {
+        "id": result.user.id,
+        "email": result.user.email,
+        "created_at": result.user.created_at
+    }

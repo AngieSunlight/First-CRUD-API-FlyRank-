@@ -17,5 +17,9 @@ def login(email, password):
     data = supabase.auth.sign_in_with_password({"email": email, "password": password})
     return data
 
+def getUser_Token(token):
+    response = supabase.auth.get_user(token)
+    return response
+
 if __name__ == "__main__":
     print("Supabase client created:", supabase)
