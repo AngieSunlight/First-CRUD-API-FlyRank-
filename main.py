@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import sqlite3
 from database import *
+from supabase_client import supabase
 
 class Task(BaseModel):
     title: str
