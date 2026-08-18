@@ -140,3 +140,42 @@ content-type: application/json
 ## Screenshot of data in the database
 ![Data in Database](Table_week3_1.png)
 
+
+Week 4 
+## A4 — Auth (Supabase)
+
+This week we've added user authentication to the API using Supabase. Users can sign up, log in, and log out, and certain routes are now protected with JWT verification — they only respond to requests carrying a valid access token.
+
+### Run the project
+
+\```
+uvicorn main:app --reload
+\```
+
+The API is available at http://localhost:8000, with interactive docs (including the Swagger "Authorize" flow) at http://localhost:8000/docs.
+
+### Auth Endpoints
+
+| Method | Endpoint              | Description                           | Auth required |
+|--------|-----------------------|---------------------------------------|----------------|
+| POST   | /auth/signup          | Creates a new user account            | No             |
+| POST   | /auth/login           | Log in and returns access token       | No             |
+| POST   | /auth/logout          | End user's session                    | Yes            |
+| GET    | /protected/profile    | Read private profile data             | Yes            |
+| GET    | /protected/dashboard  | Second protected route for dashboard  | Yes            |
+| GET    | /public/info          | Public data                           | No             |
+
+### Setup
+
+In addition to `DATABASE_URL`, this project needs two Supabase keys in your `.env`:
+\```
+SUPABASE_URL=your_project_url
+SUPABASE_KEY=your_anon_key
+\```
+Please see `.env.example` for the full list.
+
+### Swagger UI
+
+![Swagger auth demo](Stage5_1.png)
+![Swagger auth demo2](Stage5_2.png)
+![Swagger auth demo3](Stage5_3.png)
