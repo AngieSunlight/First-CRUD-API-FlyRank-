@@ -1,6 +1,6 @@
 # First-CRUD-API-FlyRank
-Week 2
 
+# Week 2
 ## What is it!
 
 This is a RESTful API built using Python and FastAPI that manages a to-do list in memory. This project implements CRUD (Create, Read, Update, Delete) operations with request validation.
@@ -57,7 +57,7 @@ content-type: application/json
 ![Swagger UI Documentation](Swagger_UI.png)
 
 
-Week 3
+# Week 3
 ## Stage 4: Exploring SQLite by hand
 
 Ran this is DB Browser:
@@ -141,7 +141,7 @@ content-type: application/json
 ![Data in Database](Table_week3_1.png)
 
 
-Week 4 
+# Week 4 
 ## A4 — Auth (Supabase)
 
 This week we've added user authentication to the API using Supabase. Users can sign up, log in, and log out, and certain routes are now protected with JWT verification — they only respond to requests carrying a valid access token.
