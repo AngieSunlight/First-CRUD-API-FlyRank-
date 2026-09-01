@@ -1,15 +1,29 @@
+import time
 import requests
+import json
 from pathlib import Path
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from datetime import datetime, timezone
-import time
+from pydantic import BaseModel, ValidationError
+from typing import Optional
 
 headers = {
     "User-Agent": "FlyRankInternship-A9/1.0 (+https://github.com/AngieSunlight/First-CRUD-API-FlyRank-)"
 }
 
 start_url = "https://books.toscrape.com/catalogue/page-1.html"
+
+class books(BaseModel):
+    title: str
+    product_url: str
+    price_text: str
+    price_gbp: float
+    availability_text: str
+    rating_text: Optional[str] = None
+    description: Optional[str] = None
+    source_page: str
+    fetched_at: str
 
 def fetch_else_cache(url, cache_file):
     if cache_file.exists():
@@ -34,6 +48,7 @@ def fetch_else_cache(url, cache_file):
         print(f"Fetch failed: {response.status_code}")
         return None
 
+    # Ensures that the price is in the correct format
     response.encoding = "utf-8"
     html = response.text
 
@@ -85,6 +100,12 @@ def extract(html, product_url, source_page):
         "source_page": source_page,
         "fetched_at": datetime.now(timezone.utc).isoformat()
     }
+
+def price_convert(price_text):
+    if price_text is None:
+        return None
+    change = price_text.replace("£", "").strip()
+    return float(change)
 
 all_links = []
 page_count = 0
@@ -142,3 +163,21 @@ print(f"detail_pages={len(records)}")
 print(f"catalogue_pages={page_count}")
 print(f"discovered={len(all_links)}")
 print(f"unique_urls={len(unique_book_entries)}")
+
+
+valid_records = []
+error_records = []
+for raw in records:
+    try:
+        validated = books(**{**raw, "price_gbp": price_convert(raw["price_text"])})
+        valid_records.append(validated.model_dump())
+    except ValidationError as e:
+        error_records.append({"record": raw, "reason": str(e)})
+
+Path("output").mkdir(parents=True, exist_ok=True)  # creates folder called output
+# creates a file, takes python lists if dicts and writes it in this open file as json
+json.dump(valid_records, open("output/books.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+json.dump(error_records, open("output/errors.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+
+print(f"valid_records={len(valid_records)}")
+print(f"error_records={len(error_records)}")
