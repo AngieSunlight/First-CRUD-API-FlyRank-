@@ -30,34 +30,48 @@ def fetch_else_cache(url, cache_file):
         print(f"CACHE HIT {url}")
         html = cache_file.read_text(encoding="utf-8")
         print(f"Response size: {len(html)} bytes")
-        return html
+        return html, "cache_hit"
 
     print(f"FETCH {url}")
 
-    try:
-        response = requests.get(
-            url,
-            headers=headers,
-            timeout=10
-        )
-    except requests.exceptions.RequestException as e:
-        print(f"Fetch failed due to network error: {e}")
-        return None
+    for attempt in range(2):
+        try:
+            response = requests.get(
+                url,
+                headers=headers,
+                timeout=10
+            )
+        except requests.exceptions.RequestException as e:
+            print(f"Fetch failed due to network error: {e}")
+            if attempt ==  0:
+                time.sleep(1)
+                continue
+            return None, "failed"
 
-    if response.status_code != 200:
+        if response.status_code == 200:
+            # Ensures that the price is in the correct format
+            response.encoding = "utf-8"
+            html = response.text
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            cache_file.write_text(html, encoding="utf-8")
+            print(f"Response size: {len(html)} bytes")
+            return html, "fetched"
+
+        if response.status_code in (404, 403):
+                print(f"Fetch failed: {response.status_code} (not retrying)")
+                return None, "failed"
+
+        if response.status_code >= 500:
+            print(f"Fetch failed: {response.status_code} (server error, retrying)")
+            if attempt == 0:
+                time.sleep(1)
+                continue
+            return None, "failed"
+
         print(f"Fetch failed: {response.status_code}")
-        return None
+        return None, "failed"
 
-    # Ensures that the price is in the correct format
-    response.encoding = "utf-8"
-    html = response.text
-
-    cache_file.parent.mkdir(parents=True, exist_ok=True)
-    cache_file.write_text(html, encoding="utf-8")
-
-    print(f"Response size: {len(html)} bytes")
-
-    return html
+    return None, "failed"
 
 def get_book_links(html):
     soup = BeautifulSoup(html, "html.parser")
@@ -107,6 +121,12 @@ def price_convert(price_text):
     change = price_text.replace("£", "").strip()
     return float(change)
 
+# tracking for the run-report
+start = datetime.now(timezone.utc)
+pages = 0
+cache_hits = 0
+failures = 0
+
 all_links = []
 page_count = 0
 current_url = start_url
@@ -119,7 +139,15 @@ while current_url and page_count < max_num:
     was_cached = cache_file.exists()
 
     # Fetch the page, else break
-    html = fetch_else_cache(current_url, cache_file)
+    html, fetch_status = fetch_else_cache(current_url, cache_file)
+
+    if fetch_status == "cache_hit":
+        cache_hits += 1
+    elif fetch_status == "fetched":
+        pages += 1
+    elif fetch_status == "failed":
+        failures += 1
+
     if html is None:
         break
 
@@ -146,11 +174,25 @@ for entry in all_links:
         seen_urls.add(entry["url"])
         unique_book_entries.append(entry)
 
+# broken url attempt
+unique_book_entries.append({
+    "url": "https://books.toscrape.com/123/my-favourite-book/index.html",
+    "source_page": "test"
+})
+
 records = []
 for i, entry in enumerate(unique_book_entries, start=1):
     cache_file = Path(f"cache/book-{i}.html")
     was_cached = cache_file.exists()
-    html = fetch_else_cache(entry["url"], cache_file)
+    html, fetch_status = fetch_else_cache(entry["url"], cache_file)
+
+    if fetch_status == "cache_hit":
+        cache_hits += 1
+    elif fetch_status == "fetched":
+        pages += 1
+    elif fetch_status == "failed":
+        failures += 1
+
     if html is None:
         continue
     if not was_cached:
@@ -181,3 +223,21 @@ json.dump(error_records, open("output/errors.json", "w", encoding="utf-8"), inde
 
 print(f"valid_records={len(valid_records)}")
 print(f"error_records={len(error_records)}")
+
+# run report
+end_time = datetime.now(timezone.utc)
+duration_seconds = (end_time - start).total_seconds()
+
+report = {
+    "start_time": start.isoformat(),
+    "duration_seconds": duration_seconds,
+    "pages_fetched": pages,
+    "cache_hits": cache_hits,
+    "valid_records": len(valid_records),
+    "invalid_records": len(error_records),
+    "failed_pages": failures
+}
+
+json.dump(report, open("output/run-report.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+
+print(f"failed_pages={failures}")
