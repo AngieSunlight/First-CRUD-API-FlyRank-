@@ -14,6 +14,9 @@ headers = {
 
 start_url = "https://books.toscrape.com/catalogue/page-1.html"
 
+# Dynamic cache directory path relative to main.py location
+CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
+
 class books(BaseModel):
     title: str
     product_url: str
@@ -135,7 +138,7 @@ max_num = 3
 while current_url and page_count < max_num:
     # Build the cache names for the page
     page_count += 1
-    cache_file = Path(f"cache/catalogue-page-{page_count}.html")
+    cache_file = CACHE_DIR / f"catalogue-page-{page_count}.html"
     was_cached = cache_file.exists()
 
     # Fetch the page, else break
@@ -182,7 +185,7 @@ unique_book_entries.append({
 
 records = []
 for i, entry in enumerate(unique_book_entries, start=1):
-    cache_file = Path(f"cache/book-{i}.html")
+    cache_file = CACHE_DIR / f"book-{i}.html"
     was_cached = cache_file.exists()
     html, fetch_status = fetch_else_cache(entry["url"], cache_file)
 
